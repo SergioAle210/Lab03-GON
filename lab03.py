@@ -579,27 +579,7 @@ for genero_pelicula in generos_peliculas:
 
 # FIN INCERCIÓN DE DATOS
 
-
-# Inicio Funciones de búsqueda (¡IMPORTANTE!: PARA EJECUTAR ESTA PARTE COMENTAR LA INSERCIÓN DE DATOS ARRIBA PARA EVITAR ERRORES POR FAVOR)
-
-print("Buscando usuario con ID 1:")
-usuarios_encontrados = graph.encontrar_usuario(user_id=1)
-for usuario in usuarios_encontrados:
-    print(usuario)
-
-print("\nBuscando película '¿Qué pasó ayer?':")
-peliculas_encontradas = graph.encontrar_pelicula(title="¿Qué pasó ayer?")
-for pelicula in peliculas_encontradas:
-    print(pelicula)
-
-print("\nBuscando relación de rating entre Carlos (ID 1) y '¿Qué pasó ayer?' (ID 101):")
-rating_encontrado = graph.encontrar_rating(1, 101)
-for relacion in rating_encontrado:
-    print(relacion)
-
-# Fin Funciones de búsqueda
-
-print("Ejecutado exitosamente.")
+print("La inserción de datos fue exitosa.")
 
 # Cerrar conexión
 graph.close()
