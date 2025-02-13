@@ -3,7 +3,9 @@
 # Carlos Valladares - 221164
 
 from neo4j import GraphDatabase
-import config 
+from config import PASSWORD, USERNAME, URI
+from datetime import datetime
+
 
 class MovieGraph:
     def __init__(self, uri, user, password):
@@ -15,27 +17,26 @@ class MovieGraph:
     def crear_nodo(self, label, propiedades):
 
         query = f"CREATE (n:{label} {{ {', '.join([f'{k}: ${k}' for k in propiedades.keys()])} }})"
-        
+
         with self.driver.session() as session:
             session.run(query, **propiedades)
 
     def crear_relacion(self, label1, prop1, relacion, label2, prop2, propiedades={}):
-        
+
         query = f"""
         MATCH (a:{label1} {{{', '.join([f'{k}: ${'a_' + k}' for k in prop1.keys()])}}})
         MATCH (b:{label2} {{{', '.join([f'{k}: ${'b_' + k}' for k in prop2.keys()])}}})
         CREATE (a)-[:{relacion} {{{', '.join([f'{k}: ${'r_' + k}' for k in propiedades.keys()])}}}]->(b)
         """
-        
+
         parametros = {f"a_{k}": v for k, v in prop1.items()}
         parametros.update({f"b_{k}": v for k, v in prop2.items()})
         parametros.update({f"r_{k}": v for k, v in propiedades.items()})
-        
+
         with self.driver.session() as session:
             session.run(query, **parametros)
 
-
-   # Encontrar un usuario por su ID o nombre
+    # Encontrar un usuario por su ID o nombre
     def encontrar_usuario(self, user_id=None, name=None):
         query = """
         MATCH (u:User) 
@@ -65,28 +66,18 @@ class MovieGraph:
         """
         with self.driver.session() as session:
             result = session.run(query, user_id=user_id, movie_id=movie_id)
-            return [{"usuario": record["u"], "relacion": record["r"], "pelicula": record["m"]} for record in result]
-
-
+            return [
+                {
+                    "usuario": record["u"],
+                    "relacion": record["r"],
+                    "pelicula": record["m"],
+                }
+                for record in result
+            ]
 
 
 # Configurar conexión con Neo4j desde config.py
-graph = MovieGraph(config.NEO4J_URI, config.NEO4J_USER, config.NEO4J_PASSWORD)
-
-# INICIO INCERSIÓN DE DATOS (SECCIÓN A COMENTAR PARA LAS CONSULTAS DE BÚSQUEDA PARA EVITAR ERRORES. EN CASO DE QUERER SOLO INSERTAR DATOS COMENTAR LA SECCIÓN DE CONSULTAS)
-
-# PARA CREAR UN NODO SE HACE DE LA SIGUIENTE MANERA:
-# LISTADO_DEL_NODO = [
-#   {"PROPIEDAD": "DATO", "PROPIEDAD": "DATO"},
-#   {"PROPIEDAD": "DATO", "PROPIEDAD": "DATO"},
-#   {"PROPIEDAD": "DATO", "PROPIEDAD": "DATO"},
-#   {"PROPIEDAD": "DATO", "PROPIEDAD": "DATO"}
-# ]
-
-# ITERAMOS PARA CADA DATO A INGRESAR
-# for DATO in NODO
-#   graph.crear_nodo("NODO", LISTADO_DEL_NODO) 
-
+graph = MovieGraph(URI, USERNAME, PASSWORD)
 
 # Agregar 5 usuarios
 usuarios = [
@@ -94,68 +85,499 @@ usuarios = [
     {"name": "Sergio", "userId": 2},
     {"name": "Brandon", "userId": 3},
     {"name": "Alejandro", "userId": 4},
-    {"name": "Alberto", "userId": 5}
+    {"name": "Alberto", "userId": 5},
 ]
 
 for usuario in usuarios:
     graph.crear_nodo("User", usuario)
 
-# Agregar 5 películas
-peliculas = [
-    {"title": "¿Qué pasó ayer?", "movieId": 101, "year": 2009, "plot": "Un grupo de amigos despierta después de una despedida de soltero sin recordar nada y debe encontrar al novio desaparecido."},
-    {"title": "Supercool", "movieId": 102, "year": 2007, "plot": "Dos amigos intentan comprar alcohol para una fiesta en su última noche antes de graduarse."},
-    {"title": "The Matrix", "movieId": 103, "year": 1999, "plot": "Un hacker descubre la verdad sobre su realidad y lucha contra un sistema opresor."},
-    {"title": "Dos tontos en apuros", "movieId": 104, "year": 1994, "plot": "Dos amigos tontos emprenden un viaje para devolver un maletín lleno de dinero sin saber que pertenece a criminales."},
-    {"title": "Proyecto X", "movieId": 105, "year": 2004, "plot": "Un grupo de adolescentes organiza una fiesta que rápidamente se sale de control, causando un caos masivo."}
+# Lista de actores
+actores = [
+    {
+        "id": 1,
+        "name": "Leonardo DiCaprio",
+        "tmdbId": 6193,
+        "born": datetime(1974, 11, 11),
+        "died": None,
+        "bornIn": "Los Angeles, USA",
+        "url": "https://www.themoviedb.org/person/6193",
+        "imdbId": 12345,
+        "bio": "Actor ganador del Oscar.",
+        "poster": "https://example.com/leonardo.jpg",
+    },
+    {
+        "id": 2,
+        "name": "Scarlett Johansson",
+        "tmdbId": 1245,
+        "born": datetime(1984, 11, 22),
+        "died": None,
+        "bornIn": "New York, USA",
+        "url": "https://www.themoviedb.org/person/1245",
+        "imdbId": 67890,
+        "bio": "Actriz famosa por Black Widow.",
+        "poster": "https://example.com/scarlett.jpg",
+    },
+    {
+        "id": 3,
+        "name": "Brad Pitt",
+        "tmdbId": 287,
+        "born": datetime(1963, 12, 18),
+        "died": None,
+        "bornIn": "Oklahoma, USA",
+        "url": "https://www.themoviedb.org/person/287",
+        "imdbId": 99988,
+        "bio": "Actor conocido por Fight Club.",
+        "poster": "https://example.com/bradpitt.jpg",
+    },
+    {
+        "id": 4,
+        "name": "Natalie Portman",
+        "tmdbId": 524,
+        "born": datetime(1981, 6, 9),
+        "died": None,
+        "bornIn": "Jerusalem, Israel",
+        "url": "https://www.themoviedb.org/person/524",
+        "imdbId": 77766,
+        "bio": "Actriz de Black Swan y Star Wars.",
+        "poster": "https://example.com/portman.jpg",
+    },
+    {
+        "id": 5,
+        "name": "Tom Hardy",
+        "tmdbId": 2524,
+        "born": datetime(1977, 9, 15),
+        "died": None,
+        "bornIn": "London, UK",
+        "url": "https://www.themoviedb.org/person/2524",
+        "imdbId": 55544,
+        "bio": "Actor conocido por Mad Max y Venom.",
+        "poster": "https://example.com/hardy.jpg",
+    },
 ]
 
+for actor in actores:
+    graph.crear_nodo("Actor", actor)
+
+# Lista de directores
+directores = [
+    {
+        "id": 6,
+        "name": "Christopher Nolan",
+        "tmdbId": 525,
+        "born": datetime(1970, 7, 30),
+        "died": None,
+        "bornIn": "London, UK",
+        "url": "https://www.themoviedb.org/person/525",
+        "imdbId": 112233,
+        "bio": "Director de Inception y The Dark Knight.",
+        "poster": "https://example.com/nolan.jpg",
+    },
+    {
+        "id": 7,
+        "name": "Steven Spielberg",
+        "tmdbId": 488,
+        "born": datetime(1946, 12, 18),
+        "died": None,
+        "bornIn": "Ohio, USA",
+        "url": "https://www.themoviedb.org/person/488",
+        "imdbId": 334455,
+        "bio": "Director de Jurassic Park y ET.",
+        "poster": "https://example.com/spielberg.jpg",
+    },
+    {
+        "id": 8,
+        "name": "Quentin Tarantino",
+        "tmdbId": 138,
+        "born": datetime(1963, 3, 27),
+        "died": None,
+        "bornIn": "Tennessee, USA",
+        "url": "https://www.themoviedb.org/person/138",
+        "imdbId": 223344,
+        "bio": "Director de Pulp Fiction y Kill Bill.",
+        "poster": "https://example.com/tarantino.jpg",
+    },
+    {
+        "id": 9,
+        "name": "James Cameron",
+        "tmdbId": 4,
+        "born": datetime(1954, 8, 16),
+        "died": None,
+        "bornIn": "Ontario, Canada",
+        "url": "https://www.themoviedb.org/person/4",
+        "imdbId": 556677,
+        "bio": "Director de Titanic y Avatar.",
+        "poster": "https://example.com/cameron.jpg",
+    },
+    {
+        "id": 10,
+        "name": "Ridley Scott",
+        "tmdbId": 578,
+        "born": datetime(1937, 11, 30),
+        "died": None,
+        "bornIn": "England, UK",
+        "url": "https://www.themoviedb.org/person/578",
+        "imdbId": 889900,
+        "bio": "Director de Alien y Gladiator.",
+        "poster": "https://example.com/scott.jpg",
+    },
+]
+
+for director in directores:
+    graph.crear_nodo("Director", director)
+
+# Lista de actores y directores
+actoresydirectores = [
+    {
+        "id": 11,
+        "name": "Clint Eastwood",
+        "tmdbId": 1900,
+        "born": datetime(1930, 5, 31),
+        "died": None,
+        "bornIn": "California, USA",
+        "url": "https://www.themoviedb.org/person/1900",
+        "imdbId": 667788,
+        "bio": "Actor y director de cine legendario.",
+        "poster": "https://example.com/eastwood.jpg",
+    },
+    {
+        "id": 12,
+        "name": "Ben Affleck",
+        "tmdbId": 567,
+        "born": datetime(1972, 8, 15),
+        "died": None,
+        "bornIn": "California, USA",
+        "url": "https://www.themoviedb.org/person/567",
+        "imdbId": 11223344,
+        "bio": "Actor y director conocido por Argo.",
+        "poster": "https://example.com/affleck.jpg",
+    },
+    {
+        "id": 13,
+        "name": "George Clooney",
+        "tmdbId": 50,
+        "born": datetime(1961, 5, 6),
+        "died": None,
+        "bornIn": "Kentucky, USA",
+        "url": "https://www.themoviedb.org/person/50",
+        "imdbId": 55443322,
+        "bio": "Actor y director de cine.",
+        "poster": "https://example.com/clooney.jpg",
+    },
+]
+
+for actor in actoresydirectores:
+    graph.crear_nodo("ActorDirector", actor)
+
+# Lista de películas
+peliculas = [
+    {
+        "movieid": 101,
+        "title": "Inception",
+        "year": 2010,
+        "tmdbld": 27205,
+        "released": datetime(2010, 7, 16),
+        "imdbRating": 8.8,
+        "imdbId": 1375666,
+        "runtime": 148,
+        "countries": ["USA", "UK"],
+        "imdbVotes": 2200000,
+        "url": "https://www.themoviedb.org/movie/27205",
+        "revenue": 829895144,
+        "plot": "Un ladrón que entra en los sueños para robar secretos.",
+        "poster": "https://example.com/inception.jpg",
+        "budget": 160000000,
+        "languagues": ["English", "Japanese"],
+    },
+    {
+        "movieid": 102,
+        "title": "Interstellar",
+        "year": 2014,
+        "tmdbld": 157336,
+        "released": datetime(2014, 11, 7),
+        "imdbRating": 8.6,
+        "imdbId": 816692,
+        "runtime": 169,
+        "countries": ["USA", "Canada"],
+        "imdbVotes": 1800000,
+        "url": "https://www.themoviedb.org/movie/157336",
+        "revenue": 677471339,
+        "plot": "Los exploradores viajan a través de un agujero de gusano.",
+        "poster": "https://example.com/interstellar.jpg",
+        "budget": 165000000,
+        "languagues": ["English"],
+    },
+    {
+        "title": "¿Qué pasó ayer?",
+        "movieId": 103,
+        "year": 2009,
+        "tmdbId": 12345,
+        "released": datetime(2009, 6, 5),
+        "imdbRating": 7.8,
+        "imdbId": 987654,
+        "runtime": 100,
+        "countries": ["USA"],
+        "imdbVotes": 1500000,
+        "url": "https://www.themoviedb.org/movie/12345",
+        "revenue": 467000000,
+        "plot": "Un grupo de amigos despierta después de una despedida de soltero sin recordar nada y debe encontrar al novio desaparecido.",
+        "poster": "https://example.com/hangover.jpg",
+        "budget": 80000000,
+        "languages": ["English", "Spanish"],
+    },
+    {
+        "title": "Supercool",
+        "movieId": 104,
+        "year": 2007,
+        "tmdbId": 8363,
+        "released": datetime(2007, 8, 17),
+        "imdbRating": 7.6,
+        "imdbId": 477348,
+        "runtime": 113,
+        "countries": ["USA"],
+        "imdbVotes": 800000,
+        "url": "https://www.themoviedb.org/movie/8363",
+        "revenue": 169800000,
+        "plot": "Dos amigos intentan comprar alcohol para una fiesta en su última noche antes de graduarse.",
+        "poster": "https://example.com/superbad.jpg",
+        "budget": 20000000,
+        "languages": ["English"],
+    },
+    {
+        "title": "The Matrix",
+        "movieId": 105,
+        "year": 1999,
+        "tmdbId": 603,
+        "released": datetime(1999, 3, 31),
+        "imdbRating": 8.7,
+        "imdbId": 133093,
+        "runtime": 136,
+        "countries": ["USA", "Australia"],
+        "imdbVotes": 1800000,
+        "url": "https://www.themoviedb.org/movie/603",
+        "revenue": 463517383,
+        "plot": "Un hacker descubre la verdad sobre su realidad y lucha contra un sistema opresor.",
+        "poster": "https://example.com/matrix.jpg",
+        "budget": 63000000,
+        "languages": ["English"],
+    },
+    {
+        "title": "Dos tontos en apuros",
+        "movieId": 106,
+        "year": 1994,
+        "tmdbId": 8467,
+        "released": datetime(1994, 12, 16),
+        "imdbRating": 7.3,
+        "imdbId": 109105,
+        "runtime": 107,
+        "countries": ["USA"],
+        "imdbVotes": 900000,
+        "url": "https://www.themoviedb.org/movie/8467",
+        "revenue": 247000000,
+        "plot": "Dos amigos tontos emprenden un viaje para devolver un maletín lleno de dinero sin saber que pertenece a criminales.",
+        "poster": "https://example.com/dumbanddumber.jpg",
+        "budget": 17000000,
+        "languages": ["English"],
+    },
+    {
+        "title": "Proyecto X",
+        "movieId": 107,
+        "year": 2012,
+        "tmdbId": 77016,
+        "released": datetime(2012, 3, 2),
+        "imdbRating": 6.6,
+        "imdbId": 163682,
+        "runtime": 88,
+        "countries": ["USA"],
+        "imdbVotes": 350000,
+        "url": "https://www.themoviedb.org/movie/77016",
+        "revenue": 102700000,
+        "plot": "Un grupo de adolescentes organiza una fiesta que rápidamente se sale de control, causando un caos masivo.",
+        "poster": "https://example.com/projectx.jpg",
+        "budget": 12000000,
+        "languages": ["English"],
+    },
+]
 
 for pelicula in peliculas:
     graph.crear_nodo("Movie", pelicula)
 
-# Agregar relaciones de calificación (cada usuario califica al menos 2 películas)
+# Lista de géneros
+generos = [
+    {"name": "Action"},
+    {"name": "Adventure"},
+    {"name": "Comedy"},
+    {"name": "Drama"},
+    {"name": "Fantasy"},
+    {"name": "Horror"},
+    {"name": "Mystery"},
+    {"name": "Romance"},
+    {"name": "Sci-Fi"},
+    {"name": "Thriller"},
+]
 
-# PARA CREAR UNA RELACIÓN ENTRE DOS NODOS SE HACE DE LA SIGUIENTE MANERA:
-# LISTADO_DE_RELACIONES = [
-#   {"PROP_1": VALOR, "PROP_2": VALOR, "REL_PROP": VALOR},
-#   {"PROP_1": VALOR, "PROP_2": VALOR, "REL_PROP": VALOR},
-#   {"PROP_1": VALOR, "PROP_2": VALOR, "REL_PROP": VALOR}
-# ]
-
-# ITERAMOS SOBRE CADA RELACIÓN QUE QUEREMOS CREAR
-# for RELACION in LISTADO_DE_RELACIONES:
-#   graph.crear_relacion(
-#       "LABEL_1", {"CLAVE_UNICA": RELACION["PROP_1"]},  # Nodo origen (Ej: User, identificado por userId)
-#       "TIPO_DE_RELACION",                              # Tipo de relación (Ej: "RATED", "ACTED_IN")
-#       "LABEL_2", {"CLAVE_UNICA": RELACION["PROP_2"]},  # Nodo destino (Ej: Movie, identificado por movieId)
-#       {"PROPIEDAD_REL": RELACION["REL_PROP"]}          # Propiedades opcionales de la relación (Ej: rating, timestamp)
-#   )
-
+for genero in generos:
+    graph.crear_nodo("Genre", genero)
 
 calificaciones = [
-    {"userId": 1, "movieId": 101, "rating": 5, "timestamp": 1700000000},  # Carlos -> ¿Qué pasó ayer?
-    {"userId": 1, "movieId": 102, "rating": 4, "timestamp": 1700000010},  # Carlos -> Supercool
-    {"userId": 2, "movieId": 103, "rating": 5, "timestamp": 1700000020},  # Sergio -> The Matrix
-    {"userId": 2, "movieId": 104, "rating": 3, "timestamp": 1700000030},  # Sergio -> Dos tontos en apuros
-    {"userId": 3, "movieId": 105, "rating": 4, "timestamp": 1700000040},  # Brandon -> Proyecto X
-    {"userId": 3, "movieId": 101, "rating": 3, "timestamp": 1700000050},  # Brandon -> ¿Qué pasó ayer?
-    {"userId": 4, "movieId": 102, "rating": 5, "timestamp": 1700000060},  # Alejandro -> Supercool
-    {"userId": 4, "movieId": 103, "rating": 4, "timestamp": 1700000070},  # Alejandro -> The Matrix
-    {"userId": 5, "movieId": 104, "rating": 5, "timestamp": 1700000080},  # Alberto -> Dos tontos en apuros
-    {"userId": 5, "movieId": 105, "rating": 4, "timestamp": 1700000090}   # Alberto -> Proyecto X
+    {
+        "userId": 1,
+        "movieId": 101,
+        "rating": 5,
+        "timestamp": 1700000000,
+    },  # Carlos -> ¿Qué pasó ayer?
+    {
+        "userId": 1,
+        "movieId": 102,
+        "rating": 4,
+        "timestamp": 1700000010,
+    },  # Carlos -> Supercool
+    {
+        "userId": 2,
+        "movieId": 103,
+        "rating": 5,
+        "timestamp": 1700000020,
+    },  # Sergio -> The Matrix
+    {
+        "userId": 2,
+        "movieId": 104,
+        "rating": 3,
+        "timestamp": 1700000030,
+    },  # Sergio -> Dos tontos en apuros
+    {
+        "userId": 3,
+        "movieId": 105,
+        "rating": 4,
+        "timestamp": 1700000040,
+    },  # Brandon -> Proyecto X
+    {
+        "userId": 3,
+        "movieId": 106,
+        "rating": 3,
+        "timestamp": 1700000050,
+    },  # Brandon -> ¿Qué pasó ayer?
+    {
+        "userId": 4,
+        "movieId": 102,
+        "rating": 5,
+        "timestamp": 1700000060,
+    },  # Alejandro -> Supercool
+    {
+        "userId": 4,
+        "movieId": 103,
+        "rating": 4,
+        "timestamp": 1700000070,
+    },  # Alejandro -> The Matrix
+    {
+        "userId": 5,
+        "movieId": 104,
+        "rating": 5,
+        "timestamp": 1700000080,
+    },  # Alberto -> Dos tontos en apuros
+    {
+        "userId": 5,
+        "movieId": 105,
+        "rating": 4,
+        "timestamp": 1700000090,
+    },  # Alberto -> Proyecto X
 ]
 
 for calificacion in calificaciones:
     graph.crear_relacion(
-        "User", {"userId": calificacion["userId"]},
+        "User",
+        {"userId": calificacion["userId"]},
         "RATED",
-        "Movie", {"movieId": calificacion["movieId"]},
-        {"rating": calificacion["rating"], "timestamp": calificacion["timestamp"]}
+        "Movie",
+        {"movieId": calificacion["movieId"]},
+        {"rating": calificacion["rating"], "timestamp": calificacion["timestamp"]},
     )
 
+actuaciones = [
+    {"actorId": 1, "movieId": 101, "role": "Jack Dawson"},
+    {"actorId": 2, "movieId": 102, "role": "Dominick Cobb"},
+    {"actorId": 3, "movieId": 103, "role": "Tyler Durden"},
+    {"actorId": 4, "movieId": 104, "role": "Mia Wallace"},
+    {"actorId": 5, "movieId": 105, "role": "Bane"},
+]
+
+for actuacion in actuaciones:
+    graph.crear_relacion(
+        "Actor",
+        {"id": actuacion["actorId"]},
+        "ACTED_IN",
+        "Movie",
+        {"movieId": actuacion["movieId"]},
+        {"role": actuacion["role"]},
+    )
+
+# Relaciones de dirección
+direcciones = [
+    {"directorId": 6, "movieId": 102, "role": "Director"},
+    {"directorId": 7, "movieId": 103, "role": "Director"},
+    {"directorId": 8, "movieId": 104, "role": "Director"},
+    {"directorId": 9, "movieId": 101, "role": "Director"},
+    {"directorId": 10, "movieId": 105, "role": "Director"},
+]
+
+for direccion in direcciones:
+    graph.crear_relacion(
+        "Director",
+        {"id": direccion["directorId"]},
+        "DIRECTED",
+        "Movie",
+        {"movieId": direccion["movieId"]},
+        {"role": direccion["role"]},
+    )
+
+# Actores que también son directores
+actor_director = [
+    {
+        "id": 12,
+        "movieId": 104,
+        "acting_role": "Jules Winnfield",
+        "directing_role": "Director",
+    },
+]
+
+for actor in actor_director:
+    graph.crear_relacion(
+        "ActorDirector",
+        {"id": actor["id"]},
+        "ACTED_IN",
+        "Movie",
+        {"movieId": actor["movieId"]},
+        {"role": actor["acting_role"]},
+    )
+    graph.crear_relacion(
+        "ActorDirector",
+        {"id": actor["id"]},
+        "DIRECTED",
+        "Movie",
+        {"movieId": actor["movieId"]},
+        {"role": actor["directing_role"]},
+    )
+
+# Géneros de las películas
+
+generos_peliculas = [
+    {"movieId": 101, "genre": "Sci-Fi"},
+    {"movieId": 102, "genre": "Sci-Fi"},
+    {"movieId": 103, "genre": "Comedy"},
+    {"movieId": 104, "genre": "Comedy"},
+    {"movieId": 105, "genre": "Sci-Fi"},
+    {"movieId": 106, "genre": "Comedy"},
+    {"movieId": 107, "genre": "Comedy"},
+]
+
+for genero_pelicula in generos_peliculas:
+    graph.crear_relacion(
+        "Movie",
+        {"movieId": genero_pelicula["movieId"]},
+        "IN_GENRE",
+        "Genre",
+        {"name": genero_pelicula["genre"]},
+    )
 
 # FIN INCERCIÓN DE DATOS
-
 
 
 # Inicio Funciones de búsqueda (¡IMPORTANTE!: PARA EJECUTAR ESTA PARTE COMENTAR LA INSERCIÓN DE DATOS ARRIBA PARA EVITAR ERRORES POR FAVOR)
