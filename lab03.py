@@ -1,20 +1,30 @@
 # Sergio Orellana - 221122
 # Brandon Reyes - 22992
 # Carlos Valladares - 221164
-
+# Importamos la librería para conectar con Neo4j
 from neo4j import GraphDatabase
 from config import PASSWORD, USERNAME, URI
 from datetime import datetime
 
-
+# Clase para manejar la conexión con Neo4j y realizar operaciones sobre el grafo
 class MovieGraph:
     def __init__(self, uri, user, password):
+        # Inicializa la conexión con Neo4j
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
 
     def close(self):
-        self.driver.close()
+        # Cierra la conexión con Neo4j
 
+        self.driver.close()
+    
     def crear_nodo(self, label, propiedades):
+        # Método para crear nodos en la base de datos
+        #
+        #Crea un nodo con una etiqueta y propiedades específicas en Neo4j.
+        #:param label: Etiqueta del nodo (ej. "User", "Movie", "Actor").
+        #:param propiedades: Diccionario con las propiedades del nodo.
+        #
+        # Genera la consulta Cypher para crear el nodo con las propiedades proporcionadas
 
         query = f"CREATE (n:{label} {{ {', '.join([f'{k}: ${k}' for k in propiedades.keys()])} }})"
 
@@ -22,6 +32,7 @@ class MovieGraph:
             session.run(query, **propiedades)
 
     def crear_relacion(self, label1, prop1, relacion, label2, prop2, propiedades={}):
+        # Método para crear relaciones entre nodos en Neo4j
 
         query = f"""
         MATCH (a:{label1} {{{', '.join([f'{k}: ${'a_' + k}' for k in prop1.keys()])}}})
@@ -38,6 +49,10 @@ class MovieGraph:
 
     # Encontrar un usuario por su ID o nombre
     def encontrar_usuario(self, user_id=None, name=None):
+        #Busca un usuario en la base de datos por su ID o nombre.
+        #:param user_id: ID del usuario.
+        #:param name: Nombre del usuario.
+        #:return: Lista de usuarios encontrados.
         query = """
         MATCH (u:User) 
         WHERE u.userId = $user_id OR u.name = $name
@@ -49,6 +64,10 @@ class MovieGraph:
 
     # Encontrar una película por ID o título
     def encontrar_pelicula(self, movie_id=None, title=None):
+        #Busca una película en la base de datos por su ID o título.
+        #:param movie_id: ID de la película.
+        #:param title: Título de la película.
+        #:return: Lista de películas encontradas.
         query = """
         MATCH (m:Movie)
         WHERE m.movieId = $movie_id OR m.title = $title
@@ -60,6 +79,10 @@ class MovieGraph:
 
     # Encontrar un usuario y su relación RATED con una película
     def encontrar_rating(self, user_id, movie_id):
+        #Busca la relación de calificación entre un usuario y una película.
+        #:param user_id: ID del usuario.
+        #:param movie_id: ID de la película.
+        #:return: Lista de relaciones de calificación
         query = """
         MATCH (u:User {userId: $user_id})-[r:RATED]->(m:Movie {movieId: $movie_id})
         RETURN u, r, m
@@ -75,7 +98,9 @@ class MovieGraph:
                 for record in result
             ]
 
+# ------------------------------ EJECUCIÓN DEL PROGRAMA ------------------------------
 
+# Crear una instancia de MovieGraph para conectar con Neo4j
 # Configurar conexión con Neo4j desde config.py
 graph = MovieGraph(URI, USERNAME, PASSWORD)
 
