@@ -35,8 +35,47 @@ class MovieGraph:
             session.run(query, user_id=user_id, movie_id=movie_id, rating=rating, timestamp=timestamp)
 
 
+
+
+   # Encontrar un usuario por su ID o nombre
+    def encontrar_usuario(self, user_id=None, name=None):
+        query = """
+        MATCH (u:User) 
+        WHERE u.userId = $user_id OR u.name = $name
+        RETURN u
+        """
+        with self.driver.session() as session:
+            result = session.run(query, user_id=user_id, name=name)
+            return [record["u"] for record in result]
+
+    # Encontrar una película por ID o título
+    def encontrar_pelicula(self, movie_id=None, title=None):
+        query = """
+        MATCH (m:Movie)
+        WHERE m.movieId = $movie_id OR m.title = $title
+        RETURN m
+        """
+        with self.driver.session() as session:
+            result = session.run(query, movie_id=movie_id, title=title)
+            return [record["m"] for record in result]
+
+    # Encontrar un usuario y su relación RATED con una película
+    def encontrar_rating(self, user_id, movie_id):
+        query = """
+        MATCH (u:User {userId: $user_id})-[r:RATED]->(m:Movie {movieId: $movie_id})
+        RETURN u, r, m
+        """
+        with self.driver.session() as session:
+            result = session.run(query, user_id=user_id, movie_id=movie_id)
+            return [{"usuario": record["u"], "relacion": record["r"], "pelicula": record["m"]} for record in result]
+
+
+
+
 # Configurar conexión con Neo4j desde config.py
 graph = MovieGraph(config.NEO4J_URI, config.NEO4J_USER, config.NEO4J_PASSWORD)
+
+# INICIO INCERSIÓN DE DATOS (SECCIÓN A COMENTAR PARA LAS CONSULTAS DE BÚSQUEDA PARA EVITAR ERRORES. EN CASO DE QUERER SOLO INSERTAR DATOS COMENTAR LA SECCIÓN DE CONSULTAS)
 
 # Agregar 5 usuarios
 usuarios = [
@@ -79,6 +118,29 @@ calificaciones = [
 
 for user_id, movie_id, rating, timestamp in calificaciones:
     graph.ratings(user_id, movie_id, rating, timestamp)
+
+# FIN INCERCIÓN DE DATOS
+
+
+
+# Inicio Funciones de búsqueda (¡IMPORTANTE!: PARA EJECUTAR ESTA PARTE COMENTAR LA INSERCIÓN DE DATOS ARRIBA PARA EVITAR ERRORES POR FAVOR)
+
+print("Buscando usuario con ID 1:")
+usuarios_encontrados = graph.encontrar_usuario(user_id=1)
+for usuario in usuarios_encontrados:
+    print(usuario)
+
+print("\nBuscando película '¿Qué pasó ayer?':")
+peliculas_encontradas = graph.encontrar_pelicula(title="¿Qué pasó ayer?")
+for pelicula in peliculas_encontradas:
+    print(pelicula)
+
+print("\nBuscando relación de rating entre Carlos (ID 1) y '¿Qué pasó ayer?' (ID 101):")
+rating_encontrado = graph.encontrar_rating(1, 101)
+for relacion in rating_encontrado:
+    print(relacion)
+
+# Fin Funciones de búsqueda
 
 print("Ejecutado exitosamente.")
 
