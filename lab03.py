@@ -12,29 +12,27 @@ class MovieGraph:
     def close(self):
         self.driver.close()
 
-    def usuarios(self, name, user_id):
-        query = """
-        CREATE (:User {name: $name, userId: $user_id})
-        """
+    def crear_nodo(self, label, propiedades):
+
+        query = f"CREATE (n:{label} {{ {', '.join([f'{k}: ${k}' for k in propiedades.keys()])} }})"
+        
         with self.driver.session() as session:
-            session.run(query, name=name, user_id=user_id)
+            session.run(query, **propiedades)
 
-    def peliculas(self, title, movie_id, year, plot):
-        query = """
-        CREATE (:Movie {title: $title, movieId: $movie_id, year: $year, plot: $plot})
+    def crear_relacion(self, label1, prop1, relacion, label2, prop2, propiedades={}):
+        
+        query = f"""
+        MATCH (a:{label1} {{{', '.join([f'{k}: ${'a_' + k}' for k in prop1.keys()])}}})
+        MATCH (b:{label2} {{{', '.join([f'{k}: ${'b_' + k}' for k in prop2.keys()])}}})
+        CREATE (a)-[:{relacion} {{{', '.join([f'{k}: ${'r_' + k}' for k in propiedades.keys()])}}}]->(b)
         """
+        
+        parametros = {f"a_{k}": v for k, v in prop1.items()}
+        parametros.update({f"b_{k}": v for k, v in prop2.items()})
+        parametros.update({f"r_{k}": v for k, v in propiedades.items()})
+        
         with self.driver.session() as session:
-            session.run(query, title=title, movie_id=movie_id, year=year, plot=plot)
-
-    def ratings(self, user_id, movie_id, rating, timestamp):
-        query = """
-        MATCH (u:User {userId: $user_id}), (m:Movie {movieId: $movie_id})
-        CREATE (u)-[:RATED {rating: $rating, timestamp: $timestamp}]->(m)
-        """
-        with self.driver.session() as session:
-            session.run(query, user_id=user_id, movie_id=movie_id, rating=rating, timestamp=timestamp)
-
-
+            session.run(query, **parametros)
 
 
    # Encontrar un usuario por su ID o nombre
@@ -77,6 +75,19 @@ graph = MovieGraph(config.NEO4J_URI, config.NEO4J_USER, config.NEO4J_PASSWORD)
 
 # INICIO INCERSIÓN DE DATOS (SECCIÓN A COMENTAR PARA LAS CONSULTAS DE BÚSQUEDA PARA EVITAR ERRORES. EN CASO DE QUERER SOLO INSERTAR DATOS COMENTAR LA SECCIÓN DE CONSULTAS)
 
+# PARA CREAR UN NODO SE HACE DE LA SIGUIENTE MANERA:
+# LISTADO_DEL_NODO = [
+#   {"PROPIEDAD": "DATO", "PROPIEDAD": "DATO"},
+#   {"PROPIEDAD": "DATO", "PROPIEDAD": "DATO"},
+#   {"PROPIEDAD": "DATO", "PROPIEDAD": "DATO"},
+#   {"PROPIEDAD": "DATO", "PROPIEDAD": "DATO"}
+# ]
+
+# ITERAMOS PARA CADA DATO A INGRESAR
+# for DATO in NODO
+#   graph.crear_nodo("NODO", LISTADO_DEL_NODO) 
+
+
 # Agregar 5 usuarios
 usuarios = [
     {"name": "Carlos", "userId": 1},
@@ -87,7 +98,7 @@ usuarios = [
 ]
 
 for usuario in usuarios:
-    graph.usuarios(usuario["name"], usuario["userId"])
+    graph.crear_nodo("User", usuario)
 
 # Agregar 5 películas
 peliculas = [
@@ -100,24 +111,48 @@ peliculas = [
 
 
 for pelicula in peliculas:
-    graph.peliculas(pelicula["title"], pelicula["movieId"], pelicula["year"], pelicula["plot"])
+    graph.crear_nodo("Movie", pelicula)
 
 # Agregar relaciones de calificación (cada usuario califica al menos 2 películas)
+
+# PARA CREAR UNA RELACIÓN ENTRE DOS NODOS SE HACE DE LA SIGUIENTE MANERA:
+# LISTADO_DE_RELACIONES = [
+#   {"PROP_1": VALOR, "PROP_2": VALOR, "REL_PROP": VALOR},
+#   {"PROP_1": VALOR, "PROP_2": VALOR, "REL_PROP": VALOR},
+#   {"PROP_1": VALOR, "PROP_2": VALOR, "REL_PROP": VALOR}
+# ]
+
+# ITERAMOS SOBRE CADA RELACIÓN QUE QUEREMOS CREAR
+# for RELACION in LISTADO_DE_RELACIONES:
+#   graph.crear_relacion(
+#       "LABEL_1", {"CLAVE_UNICA": RELACION["PROP_1"]},  # Nodo origen (Ej: User, identificado por userId)
+#       "TIPO_DE_RELACION",                              # Tipo de relación (Ej: "RATED", "ACTED_IN")
+#       "LABEL_2", {"CLAVE_UNICA": RELACION["PROP_2"]},  # Nodo destino (Ej: Movie, identificado por movieId)
+#       {"PROPIEDAD_REL": RELACION["REL_PROP"]}          # Propiedades opcionales de la relación (Ej: rating, timestamp)
+#   )
+
+
 calificaciones = [
-    (1, 101, 5, 1700000000),  # Carlos -> ¿Qué pasó ayer?
-    (1, 102, 4, 1700000010),  # Carlos -> Supercool
-    (2, 103, 5, 1700000020),  # Sergio -> The Matrix
-    (2, 104, 3, 1700000030),  # Sergio -> Dos tontos en apuros
-    (3, 105, 4, 1700000040),  # Brandon -> Proyecto X
-    (3, 101, 3, 1700000050),  # Brandon -> ¿Qué pasó ayer?
-    (4, 102, 5, 1700000060),  # Alejandro -> Supercool
-    (4, 103, 4, 1700000070),  # Alejandro -> The Matrix
-    (5, 104, 5, 1700000080),  # Alberto -> Dos tontos en apuros
-    (5, 105, 4, 1700000090)   # Alberto -> Proyecto X
+    {"userId": 1, "movieId": 101, "rating": 5, "timestamp": 1700000000},  # Carlos -> ¿Qué pasó ayer?
+    {"userId": 1, "movieId": 102, "rating": 4, "timestamp": 1700000010},  # Carlos -> Supercool
+    {"userId": 2, "movieId": 103, "rating": 5, "timestamp": 1700000020},  # Sergio -> The Matrix
+    {"userId": 2, "movieId": 104, "rating": 3, "timestamp": 1700000030},  # Sergio -> Dos tontos en apuros
+    {"userId": 3, "movieId": 105, "rating": 4, "timestamp": 1700000040},  # Brandon -> Proyecto X
+    {"userId": 3, "movieId": 101, "rating": 3, "timestamp": 1700000050},  # Brandon -> ¿Qué pasó ayer?
+    {"userId": 4, "movieId": 102, "rating": 5, "timestamp": 1700000060},  # Alejandro -> Supercool
+    {"userId": 4, "movieId": 103, "rating": 4, "timestamp": 1700000070},  # Alejandro -> The Matrix
+    {"userId": 5, "movieId": 104, "rating": 5, "timestamp": 1700000080},  # Alberto -> Dos tontos en apuros
+    {"userId": 5, "movieId": 105, "rating": 4, "timestamp": 1700000090}   # Alberto -> Proyecto X
 ]
 
-for user_id, movie_id, rating, timestamp in calificaciones:
-    graph.ratings(user_id, movie_id, rating, timestamp)
+for calificacion in calificaciones:
+    graph.crear_relacion(
+        "User", {"userId": calificacion["userId"]},
+        "RATED",
+        "Movie", {"movieId": calificacion["movieId"]},
+        {"rating": calificacion["rating"], "timestamp": calificacion["timestamp"]}
+    )
+
 
 # FIN INCERCIÓN DE DATOS
 
