@@ -560,12 +560,12 @@ for actor in actor_director:
 
 generos_peliculas = [
     {"movieId": 101, "genre": "Sci-Fi"},
-    {"movieId": 102, "genre": "Sci-Fi"},
+    {"movieId": 102, "genre": "Romance"},
     {"movieId": 103, "genre": "Comedy"},
-    {"movieId": 104, "genre": "Comedy"},
-    {"movieId": 105, "genre": "Sci-Fi"},
-    {"movieId": 106, "genre": "Comedy"},
-    {"movieId": 107, "genre": "Comedy"},
+    {"movieId": 104, "genre": "Drama"},
+    {"movieId": 105, "genre": "Fantasy"},
+    {"movieId": 106, "genre": "Horror"},
+    {"movieId": 107, "genre": "Mystery"},
 ]
 
 for genero_pelicula in generos_peliculas:
