@@ -88,9 +88,6 @@ usuarios = [
     {"name": "Alberto", "userId": 5},
 ]
 
-for usuario in usuarios:
-    graph.crear_nodo("User", usuario)
-
 # Lista de actores
 actores = [
     {
@@ -154,9 +151,6 @@ actores = [
         "poster": "https://example.com/hardy.jpg",
     },
 ]
-
-for actor in actores:
-    graph.crear_nodo("Actor", actor)
 
 # Lista de directores
 directores = [
@@ -222,9 +216,6 @@ directores = [
     },
 ]
 
-for director in directores:
-    graph.crear_nodo("Director", director)
-
 # Lista de actores y directores
 actoresydirectores = [
     {
@@ -265,8 +256,6 @@ actoresydirectores = [
     },
 ]
 
-for actor in actoresydirectores:
-    graph.crear_nodo("ActorDirector", actor)
 
 # Lista de películas
 peliculas = [
@@ -398,8 +387,6 @@ peliculas = [
     },
 ]
 
-for pelicula in peliculas:
-    graph.crear_nodo("Movie", pelicula)
 
 # Lista de géneros
 generos = [
@@ -415,13 +402,10 @@ generos = [
     {"name": "Thriller"},
 ]
 
-for genero in generos:
-    graph.crear_nodo("Genre", genero)
-
 calificaciones = [
     {
         "userId": 1,
-        "movieId": 101,
+        "movieId": 103,
         "rating": 5,
         "timestamp": 1700000000,
     },  # Carlos -> ¿Qué pasó ayer?
@@ -481,15 +465,6 @@ calificaciones = [
     },  # Alberto -> Proyecto X
 ]
 
-for calificacion in calificaciones:
-    graph.crear_relacion(
-        "User",
-        {"userId": calificacion["userId"]},
-        "RATED",
-        "Movie",
-        {"movieId": calificacion["movieId"]},
-        {"rating": calificacion["rating"], "timestamp": calificacion["timestamp"]},
-    )
 
 actuaciones = [
     {"actorId": 1, "movieId": 101, "role": "Jack Dawson"},
@@ -498,16 +473,6 @@ actuaciones = [
     {"actorId": 4, "movieId": 104, "role": "Mia Wallace"},
     {"actorId": 5, "movieId": 105, "role": "Bane"},
 ]
-
-for actuacion in actuaciones:
-    graph.crear_relacion(
-        "Actor",
-        {"id": actuacion["actorId"]},
-        "ACTED_IN",
-        "Movie",
-        {"movieId": actuacion["movieId"]},
-        {"role": actuacion["role"]},
-    )
 
 # Relaciones de dirección
 direcciones = [
@@ -518,16 +483,6 @@ direcciones = [
     {"directorId": 10, "movieId": 105, "role": "Director"},
 ]
 
-for direccion in direcciones:
-    graph.crear_relacion(
-        "Director",
-        {"id": direccion["directorId"]},
-        "DIRECTED",
-        "Movie",
-        {"movieId": direccion["movieId"]},
-        {"role": direccion["role"]},
-    )
-
 # Actores que también son directores
 actor_director = [
     {
@@ -537,24 +492,6 @@ actor_director = [
         "directing_role": "Director",
     },
 ]
-
-for actor in actor_director:
-    graph.crear_relacion(
-        "ActorDirector",
-        {"id": actor["id"]},
-        "ACTED_IN",
-        "Movie",
-        {"movieId": actor["movieId"]},
-        {"role": actor["acting_role"]},
-    )
-    graph.crear_relacion(
-        "ActorDirector",
-        {"id": actor["id"]},
-        "DIRECTED",
-        "Movie",
-        {"movieId": actor["movieId"]},
-        {"role": actor["directing_role"]},
-    )
 
 # Géneros de las películas
 
@@ -568,16 +505,88 @@ generos_peliculas = [
     {"movieId": 107, "genre": "Mystery"},
 ]
 
-for genero_pelicula in generos_peliculas:
-    graph.crear_relacion(
-        "Movie",
-        {"movieId": genero_pelicula["movieId"]},
-        "IN_GENRE",
-        "Genre",
-        {"name": genero_pelicula["genre"]},
-    )
 
-# FIN INCERCIÓN DE DATOS
+def main():
+    # Agregar usuarios
+    for usuario in usuarios:
+        graph.crear_nodo("User", usuario)
+    # Agregar actores
+    for actor in actores:
+        graph.crear_nodo("Actor", actor)
+    # Agregar directores
+    for director in directores:
+        graph.crear_nodo("Director", director)
+    # Agregar actores y directores
+    for actor in actoresydirectores:
+        graph.crear_nodo("ActorDirector", actor)
+    # Agregar películas
+    for pelicula in peliculas:
+        graph.crear_nodo("Movie", pelicula)
+    # Agregar géneros
+    for genero in generos:
+        graph.crear_nodo("Genre", genero)
+    # Agregar calificaciones
+    for calificacion in calificaciones:
+        graph.crear_relacion(
+            "User",
+            {"userId": calificacion["userId"]},
+            "RATED",
+            "Movie",
+            {"movieId": calificacion["movieId"]},
+            {"rating": calificacion["rating"], "timestamp": calificacion["timestamp"]},
+        )
+    # Agregar actuaciones
+    for actuacion in actuaciones:
+        graph.crear_relacion(
+            "Actor",
+            {"id": actuacion["actorId"]},
+            "ACTED_IN",
+            "Movie",
+            {"movieId": actuacion["movieId"]},
+            {"role": actuacion["role"]},
+        )
+    # Agregar direcciones
+    for direccion in direcciones:
+        graph.crear_relacion(
+            "Director",
+            {"id": direccion["directorId"]},
+            "DIRECTED",
+            "Movie",
+            {"movieId": direccion["movieId"]},
+            {"role": direccion["role"]},
+        )
+    # Agregar actores que también son directores
+    for actor in actor_director:
+        graph.crear_relacion(
+            "ActorDirector",
+            {"id": actor["id"]},
+            "ACTED_IN",
+            "Movie",
+            {"movieId": actor["movieId"]},
+            {"role": actor["acting_role"]},
+        )
+        graph.crear_relacion(
+            "ActorDirector",
+            {"id": actor["id"]},
+            "DIRECTED",
+            "Movie",
+            {"movieId": actor["movieId"]},
+            {"role": actor["directing_role"]},
+        )
+    # Agregar géneros de las películas
+    for genero_pelicula in generos_peliculas:
+        graph.crear_relacion(
+            "Movie",
+            {"movieId": genero_pelicula["movieId"]},
+            "IN_GENRE",
+            "Genre",
+            {"name": genero_pelicula["genre"]},
+        )
+
+
+if __name__ == "__main__":
+    # Sin de la inserción de datos
+    main()
 
 print("La inserción de datos fue exitosa.")
 
