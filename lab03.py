@@ -14,7 +14,6 @@ class MovieGraph:
 
     def close(self):
         # Cierra la conexión con Neo4j
-
         self.driver.close()
     
     def crear_nodo(self, label, propiedades):
@@ -47,8 +46,8 @@ class MovieGraph:
         with self.driver.session() as session:
             session.run(query, **parametros)
 
-    # Encontrar un usuario por su ID o nombre
     def encontrar_usuario(self, user_id=None, name=None):
+        # Encontrar un usuario por su ID o nombre
         #Busca un usuario en la base de datos por su ID o nombre.
         #:param user_id: ID del usuario.
         #:param name: Nombre del usuario.
